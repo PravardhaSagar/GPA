@@ -1,7 +1,9 @@
+// import axios from 'axios';
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { createSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import '../../App.css'
+import axios from 'axios'
 
 export default function SignInPage() {
     const navigate = useNavigate();
@@ -13,8 +15,21 @@ export default function SignInPage() {
       
     const handleClick=(event) => {
         event.preventDefault();
-        console.log(username+" passed to home")
-        navigate('/home',{state:{userName:username}});
+        const request={
+            userName:username
+        }
+        //if the Username Exists the Navigate to home else Make a pop Up page
+        axios.post('http://localhost:750/verifyUsername',request).then((res)=>{
+            console.log(res.data)
+            if(res.data){
+                console.log('The UserName exists')
+                console.log(username+" passed to home")
+                navigate('/home',{state:{userName:username}});
+            }
+            else{
+                alert('Username does not exists')
+            }
+        })
     }
     return (
         <div className="text-center m-5-auto">

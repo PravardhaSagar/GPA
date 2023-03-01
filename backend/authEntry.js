@@ -10,17 +10,17 @@ const StudentSchema = new Schema({
         type:String,
         required:true
     },
-    mobileNumber:{
-        type:Number,
+    password:{
+        type:String,
         required:true
     },
-    objectSequence:{
-        type:[String],
-        require:true
+    objectSequence:[String],
+    totp:{
+        type:Number
     }
 },{
     timestamps:true
 });
  
-const Blog = mongoose.model('Blog',StudentSchema);
-module.exports=Blog;
+const authEntry = mongoose.model('authEntry',StudentSchema);
+module.exports=authEntry;

@@ -12,7 +12,7 @@ import hen from '../../Images/hen/1000.jpg'
 import spider from '../../Images/spider/1000.jpg'
 import axios from 'axios'
 
-
+//Make a alternate property while in image tag
  function GridImage(prop){
     const [count,setCount]=useState([
         dog,dog,dog,dog,dog,
