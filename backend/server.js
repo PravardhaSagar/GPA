@@ -4,7 +4,9 @@ const connection=require('./connection.js');
 // const shuffle=require('./shuffle')
 const app= express();
 const dotevn = require('dotenv');
+const bcrypt=require('bcrypt')
 const port=process.env.PORT||750;
+const jwt = require('jsonwebtoken')
 
 const authEntry =require('./authEntry.js')
 app.use(express.json())
@@ -31,49 +33,70 @@ app.post('/',(req,res)=>{
   //shuffle the object and then randomize the images
   shuffle(animals)
   console.log(animals)
-   authEntry.findOne({userName:req.body.username}).then((result)=>{
-    const sequence=result.objectSequence;
-    console.log(sequence)
-    for(x in sequence){
-      const pos=animals.indexOf(sequence[x])+1
-      totp=totp*10+pos
-    }
-    // console.log(totp)
-    authEntry.findOneAndUpdate({userName: req.body.username}, {totp:totp}, {upsert: true}, function(err, doc) {
+  const loginObjectSequence=animals.toString()//This should be encrypted string
+  // console.log(totp)
+  authEntry.findOneAndUpdate({userName: req.body.username}, {loginObjectSequence:loginObjectSequence}, {upsert: true}, function(err, doc) {
       if (err){console.log('errorr'+err)}
-      else{
-        console.log('totp sucessfully updated'+totp)
-      }
   });
-  })
-  //Update the TOTP to the document
-  console.log(totp)
-  
   for(let i=0;i<9;i++){
     const ranomImageNumber=Math.floor(Math.random() * (1500 - 1000 + 1) + 1000);
     grid[i]="http://localhost:750/"+animals[i]+"/"+ranomImageNumber+".jpg"
   }
   console.log(grid)
-  //Calculating a temporary password and SaveBack to into the Database
+  // res.send(loginObjectSequence)
   res.send(grid)
+
 }
 )
 
-app.post('/verifyPin',(req,res)=>{
-  console.log("Recieved Pin and UserName"+req.body.pin+""+req.body.userName)
-  //Compare the pin with TOTP
-  authEntry.findOne({userName:req.body.userName}).then((result)=>{
-    console.log(result)
+app.post('/verifyPin',async (req,res)=>{
+  //recieve the loginObjectSequence
+  var loginObjectSequence=""
+  var loginEnteredSequence=[]
+  var pin_index
+  var hashedPasswordSequence=""
+  var loggedIn
+  var userName
+  var email
+  await authEntry.findOne({userName:req.body.userName}).then((result)=>{
+    userName=result.userName
+    email=result.emailId
+    //decrypt the loginObjectSequence
+    loginObjectSequence=result.loginObjectSequence
+    loginObjectSequence=loginObjectSequence.split(",")
+    console.log(loginObjectSequence)
+    hashedPasswordSequence=result.objectSequence
+  })
+  console.log(hashedPasswordSequence)
+  //deconstructing the pin object sequence
+  if(req.body.pin>9){
+    pin_index=req.body.pin.split("")
+  }
+  else{ pin_index=[req.body.pin]}
+  // console.log(pin_index)
+  for(i in pin_index){
+    c=parseInt(pin_index[i])-1
+    loginEnteredSequence.push(loginObjectSequence[c])
+    // console.log("c"+c+"Entered"+loginEnteredSequence)
+  }
+  loginEnteredSequence=loginEnteredSequence.toString()
+  //comparing with DB
+  loggedIn=bcrypt.compareSync(loginEnteredSequence, hashedPasswordSequence); 
 
-    if(result){
-      console.log("sucessfully loged IN")
-      res.redirect("www.google.com")
-    }
-    else{
-      res.send(false)
-    }
-})
-  res.send(req.body.pinNum)
+  if(loggedIn){
+    const token = jwt.sign(
+			{
+				name: userName,
+				email: email,
+			},
+			'secret123',
+      { expiresIn: 50000 }
+		)
+    res.send({status:'ok', user:token})
+  }
+  else{
+    res.send({status:'error', user:false})
+  }
 })
 
 app.post('/verifyUsername',(req,res)=>{
@@ -99,11 +122,13 @@ app.post('/register',(req,res)=>{//This route stores the other information of th
       res.send(false)
     }
     else{
+      const hashPassword = bcrypt.hashSync(req.body.password, 12);
       //As the Username does Not Exists i will make an entry of other object properties.
       const auth =new authEntry({
         userName:req.body.userName,
         emailId:req.body.emailAddress,
-        password:req.body.password,  
+        password:hashPassword,  
+        quote:""
       })
       console.log(auth)
       auth.save().then((result)=>{
@@ -111,7 +136,7 @@ app.post('/register',(req,res)=>{//This route stores the other information of th
       }).catch((err)=>{
         console.log("error while saving new reult"+err)
       })
-      res.send(true)
+      res.send(auth)
     }
   });
 })
@@ -120,11 +145,13 @@ app.post('/makePassword',(req,res)=>{//This route stores the choosen object sequ
   var query = {userName: req.body.userName};
   console.log(query)
   var newData=req.body.ojectSequence;
+  newData=newData.toString();
+  const hashSequence = bcrypt.hashSync(newData, 12);
   console.log(newData)
-  authEntry.findOneAndUpdate(query, {objectSequence:newData}, {upsert: true}, function(err, doc) {
+  authEntry.findOneAndUpdate(query, {objectSequence:hashSequence}, {upsert: true}, function(err, doc) {
       if (err){console.log('errorr'+err)}
       else{
-        console.log('sucessfully updated')
+        res.send('sucessfully updated')
       }
   });
 })
@@ -163,3 +190,36 @@ app.get('/a', (req,res) => {
   res.send('updated one');
 })
 //this logic will also be used to calculate the totp before serving the gridimage while login
+
+app.get('/dashboard', async (req, res) => {
+	const token = req.headers['x-access-token']
+  console.log("Recieved get token"+token)
+
+	try {
+		const decoded = jwt.verify(token, 'secret123')
+		const email = decoded.email
+		const user = await authEntry.findOne({ emailId: email })
+    console.log(user)
+		res.send({ status: 'ok', quote: user.quote })
+	} catch (error) {
+		console.log(error)
+		res.send({ status: 'error', error: 'invalid token' })
+	}
+})
+
+app.post('/dashboard', async (req, res) => {
+  const token = req.headers['x-access-token']
+  console.log("Recieved get token"+token)
+  const quote=req.body.quote
+  console.log(quote)
+	try {
+		const decoded = jwt.verify(token, 'secret123')
+		const email = decoded.email
+		const user = await authEntry.findOneAndUpdate({ emailId: email },{quote:quote})
+    console.log(user)
+		res.send({ status: 'ok', quote: user.quote })
+	} catch (error) {
+		console.log(error)
+		res.send({ status: 'error', error: 'invalid token' })
+	}
+})

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import { useLocation } from "react-router-dom";
+import { useNavigate } from 'react-router-dom'
 
 import CatG from '/Users/pravardhasagar/Desktop/Graphical Password Authentication/gpa/src/Images/Grid/CatG.jpg'
 import CowG from '/Users/pravardhasagar/Desktop/Graphical Password Authentication/gpa/src/Images/Grid/CowG.jpg'
@@ -16,7 +17,7 @@ import ElephantG from '/Users/pravardhasagar/Desktop/Graphical Password Authenti
 import '../../App.css'
  
 export default function GpaRegister (){
-    const s="asldfkj"
+    const navigate = useNavigate();
     const [userName,setName]=useState('')
     const [sequence,setsequence]=useState([])
     const [display,setdisplay]=useState('')
@@ -43,11 +44,12 @@ export default function GpaRegister (){
         axios.post('http://localhost:750/makePassword',a).then((res)=>{
             //response will be boolean
             if(res){
-                
+                alert("Account created")
             }
             else{
-
+                alert("Account could not be created")
             }
+            navigate('/')
             })  
     }
        return( 

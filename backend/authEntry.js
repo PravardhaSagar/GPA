@@ -1,6 +1,5 @@
 var mongoose=require('mongoose');
 const Schema=mongoose.Schema
-var object=["butterfly","cat","cow","dog","elephant","hen","horse","sheep","spider","squirille"]
 const StudentSchema = new Schema({
     userName:{
         type: String,
@@ -10,14 +9,18 @@ const StudentSchema = new Schema({
         type:String,
         required:true
     },
-    password:{
+    password:{//hashed password
         type:String,
         required:true
     },
-    objectSequence:[String],
-    totp:{
-        type:Number
-    }
+    objectSequence:{//hashed sequence
+        type:String,
+    },
+    quote:{
+        type:String
+    },
+    loginObjectSequence:{
+        type:String}//encrypted sequence - This should be decrypted
 },{
     timestamps:true
 });

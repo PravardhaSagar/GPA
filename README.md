@@ -68,3 +68,18 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+bcrypt js for hashing[]
+Store the sequence as a string(Data should be a string to encrypt)
+First implement bcryt to store the password, and the object sequence.
+Second Store the shuffled array while passing the grid to login
+Recived the Number, compute the entered object sequence.
+Compare this with the object sequence using Bcrypt
+
+jsonwebtoken to generate web tokens for client-side authorisation
+
+var jwt = require('jsonwebtoken');
+var token = jwt.sign({ foo: 'bar' }, 'shhhhh');
+
+var decoded = jwt.verify(token, 'shhhhh');
+console.log(decoded.foo) // bar

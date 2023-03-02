@@ -1,12 +1,12 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-
 import LandingPage from './components/pages/LandingPage'
 import LoginPage from './components/pages/LoginPage'
 import RegisterPage from './components/pages/RegisterPage'
 import ForgetPasswordPage from './components/pages/ForgetPasswordPage'
 import HomePage from './components/pages/HomePage'
 import SelectPassword from './components/pages/SelectPassword'
+import Dashboard from './components/pages/dashboard'
 import './App.css'
 
 export default function App() {
@@ -22,6 +22,7 @@ export default function App() {
                     <Route path='/forget-password' element={ <ForgetPasswordPage/> } />
                     <Route path='/home' element={ <HomePage/> } />
                     <Route path='/selectpassword' element={<SelectPassword/>} />
+                    <Route path='/dashboard' element={<Dashboard/>}/>
                 </Routes>
              
             </div>

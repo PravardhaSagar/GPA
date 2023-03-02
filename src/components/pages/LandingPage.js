@@ -32,7 +32,6 @@ export default function LandingPage() {
     
     return (
         <header style={ HeaderStyle }>
-            <button onClick={TakeImage}>here</button>
             {renderElement()}
             <h1 className="main-title text-center">login / register page</h1>
             <p className="main-para text-center">Graphical Password Authentication</p>
