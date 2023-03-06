@@ -13,8 +13,6 @@ export default function HomePage() {
     const [count,setCount]=useState(0)
     let pin;
 
-    // const [searchparams] = useSearchParams ();
-    // console.log(searchparams.get("userName"));
     const location = useLocation();
     useEffect(()=>{
         setName(location.state.userName)
@@ -25,7 +23,7 @@ export default function HomePage() {
         event.preventDefault();
         let a= {userName:userName,
             pin: pin}
-        console.log("inside handlePinclick Pin="+pin)
+        console.log(a)
         axios.post('http://localhost:750/verifyPin',a).then((res)=>{
                 console.log(res.data)
                 if(res.data.user){
@@ -38,7 +36,7 @@ export default function HomePage() {
                         setCount(count+1)
                     }
                     else{
-                        console.log("Coming here")
+                        console.log("Maximum attemps exceeded")
                         navigate('/');
                     }
                 }
@@ -53,7 +51,7 @@ export default function HomePage() {
             <p>
                 <label>Enter the Passcode</label><br/>
                 <input type="number" name="first_name" required onChange={(e)=> {
-                    // console.log(e.target.value)
+                    console.log(e.target.value)
                     pin=e.target.value}}/>
             </p>
             <p>

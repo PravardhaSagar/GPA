@@ -99,8 +99,9 @@ app.post('/verifyPin',async (req,res)=>{
   }
 })
 
-app.post('/verifyUsername',(req,res)=>{
+app.post('/verifyUsername',async (req,res)=>{
   //1. We verify if the userName exists or not
+  result=await checkUserName(req.body.userName)
   authEntry.findOne({userName:req.body.userName}).then((result)=>{
     if(result){
       res.send(true)
@@ -114,50 +115,155 @@ app.post('/verifyUsername',(req,res)=>{
 //------------------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
-app.post('/register',(req,res)=>{//This route stores the other information of the user
+app.post('/register',async (req,res)=>{//This route stores the other information of the user
   console.log("Recieved a register request with UserName: "+req.body.userName+" EmailAddress"+req.body.emailAddress+"Password"+req.body.password)
   //CHECK WITH THE DATABASE IS THE USERNAME EXISTS
-  authEntry.findOne({userName:req.body.userName}).then((result)=>{
+    result= await checkUserName(req.body.userName)
+    console.log(result)
     if(result){
       res.send(false)
     }
     else{
       const hashPassword = bcrypt.hashSync(req.body.password, 12);
       //As the Username does Not Exists i will make an entry of other object properties.
-      const auth =new authEntry({
-        userName:req.body.userName,
-        emailId:req.body.emailAddress,
-        password:hashPassword,  
-        quote:""
-      })
-      console.log(auth)
-      auth.save().then((result)=>{
-        console.log("Sucessfully saved "+result)
-      }).catch((err)=>{
-        console.log("error while saving new reult"+err)
-      })
-      res.send(auth)
+      const token = jwt.sign(
+        {
+          userName:req.body.userName,
+          emailId:req.body.emailAddress,
+          password:hashPassword,  
+          quote:""
+        },
+        'secret123',
+        { expiresIn: 50000 }
+      )
+      res.send({status:'ok', user:token})
+      // const auth =new authEntry({
+      //   userName:req.body.userName,
+      //   emailId:req.body.emailAddress,
+      //   password:hashPassword,  
+      //   quote:""
+      // })
+      //Instead of saving it I can just pass it to make password
+      // console.log(auth)
+      // auth.save().then((result)=>{
+      //   console.log("Sucessfully saved "+result)
+      // }).catch((err)=>{
+      //   console.log("error while saving new reult"+err)
+      // })
+      // res.send(auth)
     }
-  });
-})
+  }
+  );
 
-app.post('/makePassword',(req,res)=>{//This route stores the choosen object sequence as password
-  var query = {userName: req.body.userName};
-  console.log(query)
+
+app.post('/makePassword',authenticateToken,async(req,res)=>{//This route stores the choosen object sequence as password
+  //recieve the token and derive the contents
+ //jwt verification
   var newData=req.body.ojectSequence;
+  console.log("insid ethe makepassword route"+newData)
   newData=newData.toString();
   const hashSequence = bcrypt.hashSync(newData, 12);
-  console.log(newData)
-  authEntry.findOneAndUpdate(query, {objectSequence:hashSequence}, {upsert: true}, function(err, doc) {
-      if (err){console.log('errorr'+err)}
-      else{
-        res.send('sucessfully updated')
-      }
-  });
+  checkUser=await checkUserName(req.body.userName)
+  if(checkUser){
+    //update the 
+    authEntry.findOneAndUpdate({userName:req.body.userName}, {objectSequence:hashSequence}, {upsert: true}, function(err, doc) {
+          if (err){console.log('errorr'+err)}
+          else{
+            res.send({status:"updated"})
+          }
+      });
+  }
+  else{
+    const auth =new authEntry({
+      userName:req.body.userName,
+      emailId:req.body.emailId,
+      password:req.body.password,  
+      quote:"",
+      objectSequence:hashSequence
+    })
+    auth.save().then((result)=>{
+      console.log("Sucessfully saved "+result)
+      res.send({status:"created"})
+    }).catch((err)=>{
+      console.log("error while saving new reult"+err)
+      res.send(err)
+    })
+  }
+  
+  // res.send(auth
+  // console.log(newData)
+  // authEntry.findOneAndUpdate(query, {objectSequence:hashSequence}, {upsert: true}, function(err, doc) {
+  //     if (err){console.log('errorr'+err)}
+  //     else{
+  //       res.send('sucessfully updated')
+      // }
+  // });
 })
 //------------------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+
+
+//this logic will also be used to calculate the totp before serving the gridimage while login
+
+app.get('/dashboard',authenticateToken,async (req, res) => {
+	try {
+		const email = req.user.email
+		const user = await authEntry.findOne({ emailId: email })
+    console.log(user)
+		res.send({ status: 'ok', quote: user.quote })
+	} catch (error) {
+		console.log(error)
+		res.send({ status: 'error', error: 'invalid token' })
+	}
+})
+
+app.post('/dashboard',authenticateToken,async (req, res) => {
+ 
+  const quote=req.body.quote
+  console.log(quote)
+	try {
+		const email = req.user.email
+		const user = await authEntry.findOneAndUpdate({ emailId: email },{quote:quote})
+    console.log(user)
+		res.send({ status: 'ok', quote: user.quote })
+	} catch (error) {
+		console.log(error)
+		res.send({ status: 'error', error: 'invalid token' })
+	}
+})
+//The next Feature is for forgot Password 
+//Check is the username exists
+//If the emailID and Password Matches
+//send it to Make Password
+app.post('/forgotPassword',async(req,res)=>{
+  console.log('Inside forgotpassword route'+req.body.userName)
+  u= await checkUserName(req.body.userName)
+  if(u){
+    console.log(u)
+    cred= await checkCredentials(req.body.userName,req.body.password)
+    console.log("after i"+cred)
+    if(cred){
+      const token = jwt.sign(
+        {
+          userName:req.body.userName,
+          emailId:req.body.emailAddress, 
+        },
+        'secret123',
+        { expiresIn: 5000 }
+      )
+      res.send({status:'ok', user:token})
+    }
+    else{
+      res.send(false)
+    }
+  }
+})
+
+
+
+//__________
 function shuffle(array){
   let currentIndex = array.length,  randomIndex;
 
@@ -175,51 +281,44 @@ function shuffle(array){
   return array;
 }
 
+async function checkUserName(x){
+  console.log("inside checkusername "+x)
+  result = await authEntry.findOne({userName:x})
+  console.log(result)
+  if(result){
+      return(true)
+  }
+  else{
+    return(false)
+  }
+}
+async function  checkCredentials(x,y){
+  result =await authEntry.findOne({ userName: x})
+  console.log(result.password)
+  res=bcrypt.compare(y, result.password)
+    if (res) {
+      console.log("inside checkCredentials"+x)
+      return(true)
+    }
+    else{
+      return(false)
+    }
+    }
 
-//this is for testing as we push it into the mongodb database
-//When we recieve the makePassword sequence of objects we update the already made entry
-app.get('/a', (req,res) => {
-  var query = {userName:'t'};
-  var newData=["hhh","hhhh"]
-  authEntry.findOneAndUpdate(query, {objectSequence:newData}, {upsert: true}, function(err, doc) {
-      if (err){console.log('errorr'+err)}
-      else{
-        console.log('sucessfully updated')
-      }
-  });
-  res.send('updated one');
-})
-//this logic will also be used to calculate the totp before serving the gridimage while login
-
-app.get('/dashboard', async (req, res) => {
+function authenticateToken(req, res, next) {
 	const token = req.headers['x-access-token']
-  console.log("Recieved get token"+token)
-
-	try {
-		const decoded = jwt.verify(token, 'secret123')
-		const email = decoded.email
-		const user = await authEntry.findOne({ emailId: email })
+  console.log(token)
+  if (token == null) return res.sendStatus(401)
+  try{
+    user= jwt.verify(token, 'secret123')
     console.log(user)
-		res.send({ status: 'ok', quote: user.quote })
-	} catch (error) {
-		console.log(error)
-		res.send({ status: 'error', error: 'invalid token' })
-	}
-})
-
-app.post('/dashboard', async (req, res) => {
-  const token = req.headers['x-access-token']
-  console.log("Recieved get token"+token)
-  const quote=req.body.quote
-  console.log(quote)
-	try {
-		const decoded = jwt.verify(token, 'secret123')
-		const email = decoded.email
-		const user = await authEntry.findOneAndUpdate({ emailId: email },{quote:quote})
-    console.log(user)
-		res.send({ status: 'ok', quote: user.quote })
-	} catch (error) {
-		console.log(error)
-		res.send({ status: 'error', error: 'invalid token' })
-	}
-})
+    if(res){
+      req.user=user
+      console.log(req)
+      next()
+    }
+  }
+  catch{
+    return res.sendStatus(403)
+  }
+}

@@ -9,7 +9,7 @@ export default function SignInPage() {
     const navigate = useNavigate();
     const [username,setName]=useState('')
     const handleChange =(e)=>{
-        console.log(e.target.value);
+        // console.log(e.target.value);
         setName(e.target.value);
       }
       
@@ -23,7 +23,7 @@ export default function SignInPage() {
             console.log(res.data)
             if(res.data){
                 console.log('The UserName exists')
-                console.log(username+" passed to home")
+                // console.log(username+" passed to home")
                 navigate('/home',{state:{userName:username}});
             }
             else{
@@ -45,6 +45,7 @@ export default function SignInPage() {
             </form>
             <footer>
                 <p>First time? <Link to="/register">Create an account</Link>.</p>
+                <p><Link to="/forget-password">Forgot Password</Link></p>
                 <p><Link to="/">Back to Homepage</Link>.</p>
             </footer>
         </div>

@@ -6,33 +6,32 @@ import { useState } from 'react'
 // import BackgroundImage from '../../assets/images/bg.png'    
 
 export default function LandingPage() {
-    const [count,setCount]=useState(0)
-    function TakeImage(){
-        console.log('Triggered')
+    // const [count,setCount]=useState(0)
+    // function TakeImage(){
+    //     console.log('Triggered')
 
-        // axios.post('http://localhost:750/',{
-        //     body:"nothing here run"
-        // })
-        axios.get('http://localhost:750/').then(
-            (res)=>{
-                console.log(res)
-                setCount(res.data)
-            }
-        )
-    }
-    function renderElement(){
-        if (count!==0)
-        {       let add='http://localhost:750/'+String(count)
-                return(
-                <img src="http://localhost:750/bg.png"/>
-                )
-        }
+    //     // axios.post('http://localhost:750/',{
+    //     //     body:"nothing here run"
+    //     // })
+    //     axios.get('http://localhost:750/').then(
+    //         (res)=>{
+    //             console.log(res)
+    //             setCount(res.data)
+    //         }
+    //     )
+    // }
+    // function renderElement(){
+    //     if (count!==0)
+    //     {       let add='http://localhost:750/'+String(count)
+    //             return(
+    //             <img src="http://localhost:750/bg.png"/>
+    //             )
+    //     }
             
-        }
+    //     }
     
     return (
         <header style={ HeaderStyle }>
-            {renderElement()}
             <h1 className="main-title text-center">login / register page</h1>
             <p className="main-para text-center">Graphical Password Authentication</p>
             <div className="buttons text-center">

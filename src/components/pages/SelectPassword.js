@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import axios from 'axios'
 import { useLocation } from "react-router-dom";
 import { useNavigate } from 'react-router-dom'
+import { isExpired, decodeToken } from "react-jwt"
+
 
 import CatG from '/Users/pravardhasagar/Desktop/Graphical Password Authentication/gpa/src/Images/Grid/CatG.jpg'
 import CowG from '/Users/pravardhasagar/Desktop/Graphical Password Authentication/gpa/src/Images/Grid/CowG.jpg'
@@ -20,8 +22,10 @@ export default function GpaRegister (){
     const navigate = useNavigate();
     const [userName,setName]=useState('')
     const [sequence,setsequence]=useState([])
+    const [user,setuser]=useState();
     const [display,setdisplay]=useState('')
     const location = useLocation();
+    const [token,setToken]=useState('')
     useEffect(()=>{
         setName(location.state.userName)
         console.log(location.state.userName)
@@ -36,22 +40,50 @@ export default function GpaRegister (){
     function makePassword(event){
         event.preventDefault();
         const a={
-            userName:userName,
+            userName:user.userName,
+            emailId:user.emailId,
+            password:user.password,
             ojectSequence:sequence
         }
         console.log(a)
         console.log("Sent userName and sequence to backend makePasword")
-        axios.post('http://localhost:750/makePassword',a).then((res)=>{
+        try{
+            axios.post('http://localhost:750/makePassword',a,{
+            headers: {
+                'x-access-token': token,
+        }}).then((res)=>{
             //response will be boolean
-            if(res){
+            if(res.status="updated"){
                 alert("Account created")
             }
-            else{
-                alert("Account could not be created")
+            else if(res.statu="created"){
+                alert("Account created")
             }
             navigate('/')
-            })  
+            })
+        }
+        catch(err){
+            alert(err)
+        }
     }
+    useEffect(() => {
+		const token = localStorage.getItem('token')
+        setToken(token)
+        console.log(token)
+		if (token) {
+			const user = decodeToken(token)
+            console.log(user)
+			if (!user) {
+				localStorage.removeItem('token')
+                navigate('/');
+			} else {
+				setuser(user)
+			}
+		}
+        else{
+            navigate('/');
+        }
+	}, [])
        return( 
         <div className="text-center m-5-auto">
         <div className='mid'>

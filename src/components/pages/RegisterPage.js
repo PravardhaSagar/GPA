@@ -18,10 +18,11 @@ export default function SignUpPage() {
             password:password
         }
         axios.post('http://localhost:750/register',a).then((res)=>{
-                console.log("flag recieved from the registerpage"+res.data)
-                if(res.data){
+                console.log(res.data)
+                if(res.data.user){
+                    localStorage.setItem('token', res.data.user)
                     //Navigate to Select Password.js
-                    navigate('/selectpassword',{state:{userName:a.userName}})
+                    navigate('/selectpassword',{state:{userName:res.data.user}})
                     //also sent the prop of username 
                 }
                 else{
