@@ -43,7 +43,7 @@ export default function SignInPage() {
         }}
       >
         <p>
-          <label>Username or email address</label>
+          <label>Username</label>
           <br />
           <input
             type="text"

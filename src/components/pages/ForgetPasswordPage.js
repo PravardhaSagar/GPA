@@ -71,7 +71,7 @@ export default function ForgetPasswordPage() {
         </p>
         <p>
           <button id="sub_btn" type="submit">
-            Send password reset email
+            Reset the Garaphical Password
           </button>
         </p>
       </form>
